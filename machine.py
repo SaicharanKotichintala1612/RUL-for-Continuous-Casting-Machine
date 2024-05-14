@@ -5,7 +5,7 @@ from sklearn.metrics import mean_squared_error
 import joblib
 
 # Load the dataset
-machine = pd.read_csv("/Users/saicharankotichintala/Documents/CCM ML  Model/ccm_rul_dataset.csv")
+machine = pd.read_csv("/Users/saicharankotichintala/Documents/Projects/RUL-for-Continuous-Casting-Machine-main/ccm_rul_dataset.csv")
 
 # Drop rows with NaN values in the target variable 'RUL'
 machine.dropna(subset=['RUL'], inplace=True)
@@ -31,22 +31,39 @@ joblib.dump(decision_tree_model, 'decision_tree_model.pkl')
 loaded_model = joblib.load('decision_tree_model.pkl')
 
 # Function to preprocess new data
-def preprocess_data(new_data):
+def preprocess_data(new_data, train_data_columns):
     # Convert categorical variables into numerical using one-hot encoding
     new_data_encoded = pd.get_dummies(new_data)
-    return new_data_encoded
+    # Align the columns of new_data_encoded with the columns of the training data
+    new_data_processed = new_data_encoded.reindex(columns=train_data_columns, fill_value=0)
+    return new_data_processed
 
 # Function to make predictions
-def predict_rul(new_data):
+def predict_rul(new_data, train_data_columns):
     # Preprocess the new data
-    new_data_processed = preprocess_data(new_data)
+    new_data_processed = preprocess_data(new_data, train_data_columns)
     # Make predictions using the loaded model
     predictions = loaded_model.predict(new_data_processed)
     return predictions
 
 # Example usage:
 # Load new data
-new_data = pd.read_csv("new_data.csv")
+new_data = pd.read_csv("/Users/saicharankotichintala/Documents/Projects/RUL-for-Continuous-Casting-Machine-main/ccm_rul_dataset.csv")
 # Make predictions
-predictions = predict_rul(new_data)
+predictions = predict_rul(new_data, X_train.columns)
 print(predictions)
+
+# Print predictions
+for i, pred in enumerate(predictions):
+    print(f"Prediction for sample {i + 1}: {pred}")
+    
+# Define the time unit used in the dataset (e.g., hours)
+time_unit = "hours"
+
+# Convert the numerical predictions to time format
+predictions_in_time = [pred / 24 if time_unit == "hours" else pred for pred in predictions]
+
+# Print predictions in time format
+for i, pred_time in enumerate(predictions_in_time):
+    print(f"Prediction for sample {i + 1}: {pred_time} days")
+
